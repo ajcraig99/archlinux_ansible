@@ -7,7 +7,7 @@ sudo pacman -Sy --noconfirm git ansible
 
 # 2. Clone the ANSIBLE Repo (Infrastructure)
 # REPLACE THIS WITH YOUR ANSIBLE REPO URL
-ANSIBLE_REPO="git@github.com:ajcraig99/archi3ansible.git"
+ANSIBLE_REPO="https://github.com/ajcraig99/archi3ansible.git"
 SETUP_DIR="$HOME/arch-setup"
 
 if [ -d "$SETUP_DIR" ]; then

@@ -16,8 +16,8 @@
     pacman_packages:
 
 # --- System / Build ---
-      - base-devel            # CRITICAL for AUR
-      - go                    # CRITICAL for Yay
+      - base-devel
+      - go
       - git
       - neovim
       - tree
@@ -28,6 +28,7 @@
       - usbutils
       - bluez
       - bluez-utils
+      - wget
 
       # --- Audio / Media ---
       - pipewire
@@ -48,8 +49,8 @@
       - hyprlock
       - hypridle
       - waybar
-      - rofi-wayland          # Note: NOT "rofi"
-      - swaync                # Correct name for "swaynotificationcenter"
+      - rofi-wayland          # Correct (Official)
+      - swaync                # Correct (Official)
       - wl-clipboard
       - grim
       - slurp
@@ -59,18 +60,17 @@
       # --- File Management ---
       - dolphin
       - nemo
-      - nemo-fileroller       # This IS in official repos
-      - file-roller           # Backend for nemo-fileroller
-      - gvfs                  # For trash/mounting
-      - tumbler               # Correct name for "xfce.tumbler"
-      - webp-pixbuf-loader    # For thumbnails
+      - nemo-fileroller       # Correct (Official)
+      - file-roller           # Dependency for nemo-fileroller
+      - gvfs
+      - tumbler
+      - webp-pixbuf-loader
 
       # --- Shell / Terminal ---
       - kitty
       - zsh
       - zsh-autosuggestions
       - zsh-syntax-highlighting
-      - zsh-theme-powerlevel10k
       - fzf
       - bat
       - eza
@@ -91,14 +91,15 @@
     aur_packages:
       - google-chrome
       - visual-studio-code-bin
-      - vesktop-bin           # Better Discord (Optional)
-      - smath                 # Verified name
-      - wlogout               # Logout menu
-      - grimblast-git         # Screenshot script
+      - vesktop-bin
+      - smath
+      - wlogout
+      - grimblast-git
       - onlyoffice-bin
       - peazip-qt-bin
       - pdf4qt
       - waybar-module-pacman-updates-git
+      - zsh-theme-powerlevel10k-git
 
       # --- Theming ---
       - catppuccin-gtk-theme-mocha
@@ -106,7 +107,6 @@
       - dracula-gtk-theme
       - dracula-icons-git
       - capitaine-cursors
-
     symlinks:
 # Folders
       - { src: '.config/hypr',      dest: '.config/hypr' }

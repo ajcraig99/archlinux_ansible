@@ -1,0 +1,199 @@
+---
+- name: Arch Linux Setup
+  hosts: localhost
+  connection: local
+  
+  # ----------------------------------------------------------------
+  # VARIABLES: Edit these lists to customize your setup
+  # ----------------------------------------------------------------
+  vars:
+    # 1. The folder where your dotfiles are currently located (Source)
+    #    If you cloned your repo to ~/dotfiles, leave as is.
+    dotfiles_dir: "/home/{{ ansible_user_id }}/dotfiles"
+    dotfiles_repo_url: "git@github.com:ajcraig99/nixos_hyprland.git" 
+
+    # 2. Official Arch Packages (Pacman)
+    pacman_packages:
+   # --- System / Core ---
+      - git
+      - neovim
+      - tree
+      - fastfetch
+      - btpp                 # System Monitor
+      - pipewire
+      - pipewire-pulse
+      - pavucontrol
+      - bluez                # Bluetooth backend
+      - bluez-utils
+      - usbutils
+      - cifs-utils           # SMB mounting
+      - man-db
+      - unzi
+      - p7zip
+      - ffmpeg
+      - jq
+      - socat
+
+      # --- GUI Apps ---
+      - firefox
+      - kitty
+      - dolphin              # File Manager
+      - nemo                 # Alt File Manager
+      - nemo-fileroller
+      - gvfs                 # Required for Trash/Mounting
+      - tumbler              # Thumbnails (Not xfce.tumbler)
+      - webp-pixbuf-loader   # WebP support
+      - vlc
+      - mpv
+      - gthumb               # Image Viewer
+      - loupe                # Alt Image Viewer
+      - gimp
+      - inkscape             # Includes extensions by default on Arch
+      - gnome-calendar
+      - obsidian
+      - steam
+      - discord              # Standard discord (use Vesktop in AUR if prefered)
+      - simple-scan
+      - xsane
+
+      # --- Hyprland / Wayland Utils ---
+      - hyprland
+      - waybar
+      - wofi                 # Keep as backup
+      - rofi-wayland         # Primary launcher (official repo)
+      - hyprpaper            # Wallpaper (Static)
+      - hyprlock
+      - hypridle
+      - wl-clipboard
+      - grim                 # Screenshots
+      - slurp                # Selection tool
+      - libnotify            # Notifications
+      - swaynotificationcenter
+      - playerctl            # Media keys support
+
+      # --- Shell / Terminal ---
+      - zsh
+      - zsh-autosuggestions
+      - zsh-syntax-highlighting
+      - zsh-theme-powerlevel10k # Note the name change!
+      - fzf
+      - bat
+      - eza
+      - ttf-jetbrains-mono-nerd # Font
+      - yt-dlp
+
+    # 3. AUR Packages (Yay)
+    aur_packages:
+    # --- Apps ---
+      - google-chrome
+      - visual-studio-code-bin
+      - vesktop-bin          # Better Discord client (Nix "vesktop")
+      - onlyoffice-bin       # Was in your pacman list, needs AUR
+      - peazip-qt-bin        # Archive manager
+      - smath
+      - pdf4qt               # PDF viewer
+
+      # --- Hyprland Specifics ---
+      - wlogout              # Logout menu
+      - grimblast-git        # Screenshot wrapper
+      - waybar-module-pacman-updates-git
+
+      # --- Theming (From your Nix list) ---
+      - catppuccin-gtk-theme-mocha
+      - catppuccin-cursors-mocha
+      - dracula-gtk-theme
+      - dracula-icons-git
+      - capitaine-cursors
+
+
+
+      # 4. Configuration Symlinks
+    #    Format: { src: 'path/in/repo', dest: 'path/on/system' }
+    symlinks:
+# Folders
+      - { src: '.config/hypr',      dest: '.config/hypr' }
+      - { src: '.config/waybar',    dest: '.config/waybar' }
+      - { src: '.config/rofi',      dest: '.config/rofi' }
+      - { src: '.config/kitty',     dest: '.config/kitty' }
+      - { src: '.config/fastfetch', dest: '.config/fastfetch' }
+      - { src: '.config/nemo',      dest: '.config/nemo' }
+      - { src: '.config/wlogout',   dest: '.config/wlogout' }
+      
+      # Individual Files
+      - { src: '.zshrc',            dest: '.zshrc' }
+      - { src: '.p10k.zsh',         dest: '.p10k.zsh' }
+
+  # ----------------------------------------------------------------
+  # TASKS: The logic that applies the variables above
+  # ----------------------------------------------------------------
+  tasks:
+    # --- PRE-REQ: Install Yay (AUR Helper) ---
+    - name: Check if yay is installed
+      command: which yay
+      register: yay_check
+      ignore_errors: true
+      changed_when: false
+
+    - name: Clone yay AUR repo
+      git:
+        repo: https://aur.archlinux.org/yay.git
+        dest: /tmp/yay
+      when: yay_check.rc != 0
+
+    - name: Build and install yay
+      command: makepkg -si --noconfirm
+      args:
+        chdir: /tmp/yay
+      when: yay_check.rc != 0
+
+    # --- STEP 1: Install Official Packages ---
+    - name: Install Pacman packages
+      become: true  # Requires sudo
+      community.general.pacman:
+        name: "{{ pacman_packages }}"
+        state: present
+        update_cache: true
+
+    # --- STEP 2: Install AUR Packages ---
+    - name: Install AUR packages
+      kewlfft.aur.aur:
+        name: "{{ aur_packages }}"
+        use: yay
+        state: present
+    # --- Clone Dotfiles
+    - name: Clone Dotfiles Repository
+      git:
+        repo: "{{ dotfiles_repo_url }}"
+        dest: "{{ dotfiles_dir }}"
+        update: yes
+        force: yes
+
+    # --- STEP 3: Create Directories ---
+    - name: Ensure parent directories for configs exist
+      file:
+        path: "/home/{{ ansible_user_id }}/{{ item.dest | dirname }}"
+        state: directory
+        mode: '0755'
+      loop: "{{ symlinks }}"
+
+    # --- STEP 4: Link Dotfiles ---
+    - name: Create Symlinks
+      file:
+        src: "{{ dotfiles_dir }}/{{ item.src }}"
+        dest: "/home/{{ ansible_user_id }}/{{ item.dest }}"
+        state: link
+        force: yes
+      loop: "{{ symlinks }}"
+
+      # --- STEP 5: LazyVim Setup ---
+    - name: Back up existing Nvim config (if any)
+      command: mv /home/{{ ansible_user_id }}/.config/nvim /home/{{ ansible_user_id }}/.config/nvim.bak
+      args:
+        removes: /home/{{ ansible_user_id }}/.config/nvim
+        creates: /home/{{ ansible_user_id }}/.config/nvim.bak
+
+    - name: Install LazyVim (Clone Starter Repo)
+      git:
+        repo: https://github.com/LazyVim/starter
+        dest: /home/{{ ansible_user_id }}/.config/nvim
+        depth: 1

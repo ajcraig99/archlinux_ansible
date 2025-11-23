@@ -15,6 +15,7 @@
     # 2. Official Arch Packages (Pacman)
     pacman_packages:
    # --- System / Core ---
+      - base-devel
       - git
       - neovim
       - tree

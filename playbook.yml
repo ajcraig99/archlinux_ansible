@@ -21,7 +21,7 @@
       - neovim
       - tree
       - fastfetch
-      - btpp                 # System Monitor
+      - btop                 # System Monitor
       - pipewire
       - pipewire-pulse
       - pavucontrol
@@ -30,7 +30,7 @@
       - usbutils
       - cifs-utils           # SMB mounting
       - man-db
-      - unzi
+      - unzip
       - p7zip
       - ffmpeg
       - jq

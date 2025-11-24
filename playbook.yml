@@ -133,7 +133,16 @@
         regexp: '^#\[multilib\]\n#Include = /etc/pacman.d/mirrorlist'
         replace: '[multilib]\nInclude = /etc/pacman.d/mirrorlist'
 
-
+    # --- PRE-REQ: Remove PulseAudio (Conflicts with Pipewire) ---
+    - name: Remove conflicting PulseAudio packages
+      become: true
+      community.general.pacman:
+        name:
+          - pulseaudio
+          - pulseaudio-alsa
+          - pulseaudio-bluetooth
+        state: absent
+        force: yes
 
     # --- STEP 1: Install Official Packages ---
     - name: Install Pacman packages

@@ -30,6 +30,7 @@
       - bluez-utils
       - wget
       - nwg-displays
+      - networkmanager 
 
       # --- Audio / Media ---
       - pipewire
@@ -261,28 +262,46 @@
         - bluetooth           # Bluetooth
         - fstrim.timer        # CRITICAL for SSD health (runs weekly)
 
-    # Optional: Install a Graphical Login Screen (SDDM)
-    # If you are tired of typing 'Hyprland' in the black terminal to start:
-    - name: Install and Enable SDDM (Login Manager)
+# --- STEP 7: SDDM (Login Screen) ---
+    
+    # 1. Install SDDM (Needs Root)
+    - name: Install SDDM
       become: true
-      block:
-        - name: Install SDDM
-          community.general.pacman:
-            name: sddm
-            state: present
-        
-        # (Optional) Install a nice theme for SDDM
-        - name: Install SDDM Theme (Catppuccin)
-          kewlfft.aur.aur:
-            name: sddm-catppuccin-git
-            use: yay
-            state: present
+      community.general.pacman:
+        name: sddm
+        state: present
 
-        - name: Enable SDDM Service
-          systemd:
-            name: sddm
-            enabled: true
-            state: started
+    # 2. Install Theme (MUST RUN AS USER, NOT ROOT)
+    - name: Install SDDM Theme (Catppuccin)
+      become: false   # <--- This fixes the error
+      kewlfft.aur.aur:
+        name: sddm-catppuccin-git
+        use: yay
+        state: present
+
+    # 3. Configure SDDM to use the theme (Needs Root)
+    - name: Create SDDM config directory
+      become: true
+      file:
+        path: /etc/sddm.conf.d
+        state: directory
+
+    - name: Set SDDM Theme to Catppuccin
+      become: true
+      copy:
+        dest: /etc/sddm.conf.d/theme.conf
+        content: |
+          [Theme]
+          Current=catppuccin-mocha
+
+    # 4. Enable Service (Needs Root)
+    - name: Enable SDDM Service
+      become: true
+      systemd:
+        name: sddm
+        enabled: true
+        state: started
+
     # --- STEP 6: Apply Dark Theme (GTK) ---
     - name: Ensure GTK-3.0 directory exists
       file:

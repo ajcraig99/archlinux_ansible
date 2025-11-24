@@ -187,6 +187,16 @@
         update: yes
         force: yes
 
+    # 1. Allow 'sudo pacman' without a password temporarily
+    - name: Allow passwordless sudo for pacman
+      become: true
+      lineinfile:
+        path: /etc/sudoers.d/10-ansible-pacman
+        line: "{{ ansible_user_id }} ALL=(ALL) NOPASSWD: /usr/bin/pacman"
+        create: yes
+        mode: '0440'
+        validate: 'visudo -cf %s'
+
     # --- STEP 2: Install AUR Packages ---
     - name: Install AUR packages
       kewlfft.aur.aur:
@@ -194,6 +204,12 @@
         use: yay
         state: present
 
+    # 3. Clean up the permission file
+    - name: Remove passwordless sudo for pacman
+      become: true
+      file:
+        path: /etc/sudoers.d/10-ansible-pacman
+        state: absent
 
     # --- STEP 3: Create Directories ---
     - name: Ensure parent directories for configs exist

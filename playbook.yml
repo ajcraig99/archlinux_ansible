@@ -87,6 +87,13 @@
       - simple-scan
       - jq
       - socat
+      
+      # --- SDDM & Qt Dependencies ---
+      - sddm
+      - qt5-declarative
+      - qt5-quickcontrols2
+      - qt5-graphicaleffects
+      - qt5-svg
 
     # 3. AUR Packages (Yay)
     aur_packages:
@@ -106,7 +113,7 @@
       - catppuccin-cursors-mocha
       - dracula-gtk-theme
       - dracula-icons-git
-      - sddm-catppuccin-git
+      
     symlinks:
 # Folders
       - { src: '.config/hypr',      dest: '.config/hypr' }
@@ -212,6 +219,7 @@
       file:
         path: /etc/sudoers.d/10-ansible-pacman
         state: absent
+        
 # --- STEP 3: Create Directories ---
     - name: Ensure parent directories for configs exist
       file:
@@ -263,39 +271,45 @@
         - bluetooth           # Bluetooth
         - fstrim.timer        # CRITICAL for SSD health (runs weekly)
 
-# --- STEP 7: SDDM (Login Screen) ---
-    
-    # 1. Install SDDM (Needs Root)
-    - name: Install SDDM
+    # --- STEP 7: SDDM with Chili Theme ---
+    - name: Extract Chili theme to SDDM themes directory
       become: true
-      community.general.pacman:
-        name: sddm
-        state: present
+      unarchive:
+        src: "{{ dotfiles_dir }}/.config/sddm/sddm-chili.tar.gz"
+        dest: /usr/share/sddm/themes/
+        owner: root
+        group: root
+        creates: /usr/share/sddm/themes/chili/Main.qml
 
-    # 3. Configure SDDM to use the theme (Needs Root)
     - name: Create SDDM config directory
       become: true
       file:
         path: /etc/sddm.conf.d
         state: directory
+        owner: root
+        group: root
+        mode: '0755'
 
-    - name: Set SDDM Theme to Catppuccin
+    - name: Configure SDDM to use Chili theme
       become: true
-      copy:
-        dest: /etc/sddm.conf.d/theme.conf
-        content: |
-          [Theme]
-          Current=/usr/share/sddm/themes/catppuccin-mocha
+      community.general.ini_file:
+        path: /etc/sddm.conf.d/theme.conf
+        section: Theme
+        option: Current
+        value: chili
+        owner: root
+        group: root
+        mode: '0644'
+        create: yes
+      notify: restart sddm
 
-    # 4. Enable Service (Needs Root)
     - name: Enable SDDM Service
       become: true
       systemd:
         name: sddm
         enabled: true
-        state: started
 
-    # --- STEP 6: Apply Dark Theme (GTK) ---
+    # --- STEP 8: Apply Dark Theme (GTK) ---
     - name: Ensure GTK-3.0 directory exists
       file:
         path: "/home/{{ ansible_facts.user_id }}/.config/gtk-3.0"
@@ -322,3 +336,13 @@
           gtk-xft-hinting=1
           gtk-xft-hintstyle=hintfull
           gtk-application-prefer-dark-theme=1
+
+  # ----------------------------------------------------------------
+  # HANDLERS: Actions triggered by notify
+  # ----------------------------------------------------------------
+  handlers:
+    - name: restart sddm
+      become: true
+      systemd:
+        name: sddm.service
+        state: restarted

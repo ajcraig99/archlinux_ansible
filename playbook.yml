@@ -91,7 +91,8 @@
       # --- SDDM & Qt Dependencies ---
       - sddm
       - qt5-declarative
-      - qt5-quickcontrols2
+      - qt5-quickcontrols        # QtQuick.Controls 1.x (REQUIRED for Chili theme!)
+      - qt5-quickcontrols2       # QtQuick.Controls 2.x (for other themes)
       - qt5-graphicaleffects
       - qt5-svg
 

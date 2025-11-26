@@ -252,16 +252,27 @@
         force: yes
       loop: "{{ symlinks }}"
 
-    # --- STEP 5: LazyVim Setup ---
+    # --- STEP 5: NvChad Setup ---
     - name: Back up existing Nvim config (if any)
       command: mv /home/{{ ansible_facts.user_id }}/.config/nvim /home/{{ ansible_facts.user_id }}/.config/nvim.bak
       args:
         removes: /home/{{ ansible_facts.user_id }}/.config/nvim
         creates: /home/{{ ansible_facts.user_id }}/.config/nvim.bak
+      ignore_errors: yes
 
-    - name: Install LazyVim (Clone Starter Repo)
+    - name: Clean Neovim data directories
+      file:
+        path: "/home/{{ ansible_facts.user_id }}/{{ item }}"
+        state: absent
+      loop:
+        - .local/share/nvim
+        - .local/state/nvim
+        - .cache/nvim
+      ignore_errors: yes
+
+    - name: Install NvChad (Clone Starter Repo)
       git:
-        repo: https://github.com/LazyVim/starter
+        repo: https://github.com/NvChad/starter
         dest: /home/{{ ansible_facts.user_id }}/.config/nvim
         depth: 1
 

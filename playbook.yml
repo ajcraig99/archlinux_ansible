@@ -191,19 +191,26 @@
 
     # ===== VIRTUALIZATION SETUP =====
     
-    # Handle potential package conflicts
-    - name: Check if iptables is installed
+    # Handle iptables conflict - libvirt requires iptables-nft on Arch
+    - name: Check current iptables implementation
       command: pacman -Q iptables
       register: iptables_check
       failed_when: false
       changed_when: false
 
-    - name: Ensure iptables is installed (not iptables-nft)
+    - name: Remove conflicting iptables package if present
       become: true
       community.general.pacman:
         name: iptables
+        state: absent
+        force: yes
+      when: iptables_check.rc == 0
+
+    - name: Install iptables-nft (required by libvirt)
+      become: true
+      community.general.pacman:
+        name: iptables-nft
         state: present
-      when: iptables_check.rc != 0
     
     - name: Install virtualization packages
       become: true

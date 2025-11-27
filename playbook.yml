@@ -143,6 +143,9 @@
   # ----------------------------------------------------------------
   tasks:
 
+   - name: Create XDG user dirs
+     command: xdg-user-dirs-update
+
    # --- PRE-REQ: Enable Multilib (Needed for Steam) ---
     - name: Enable Multilib repository
       become: true

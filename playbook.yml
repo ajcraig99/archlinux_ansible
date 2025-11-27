@@ -19,7 +19,7 @@
       - bridge-utils          # Network bridging utilities
       - openbsd-netcat        # Networking utility
       - ebtables              # Ethernet bridge filtering
-      - iptables-nft          # Firewall rules
+      # Note: iptables-nft removed due to conflict with iptables
       - dmidecode             # Hardware information
       
       # UEFI/TPM support
@@ -28,9 +28,7 @@
       
       # Performance tools
       - vde2                  # Virtual Distributed Ethernet
-      - qemu-audio-alsa       # ALSA audio driver
-      - qemu-audio-pa         # PulseAudio driver
-      - qemu-audio-pipewire   # Pipewire audio driver
+      # Note: qemu-audio packages removed as they're included in qemu-full
       
       # SPICE support for better graphics
       - spice                 # SPICE protocol
@@ -192,6 +190,20 @@
         update_cache: true
 
     # ===== VIRTUALIZATION SETUP =====
+    
+    # Handle potential package conflicts
+    - name: Check if iptables is installed
+      command: pacman -Q iptables
+      register: iptables_check
+      failed_when: false
+      changed_when: false
+
+    - name: Ensure iptables is installed (not iptables-nft)
+      become: true
+      community.general.pacman:
+        name: iptables
+        state: present
+      when: iptables_check.rc != 0
     
     - name: Install virtualization packages
       become: true

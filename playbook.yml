@@ -31,6 +31,7 @@
       - wget
       - nwg-displays
       - networkmanager
+      - wireguard-tools         # wg/wg-quick; VPN profiles are managed by NetworkManager (waybar custom/wireguard)
       - timeshift
       - cronie
 
